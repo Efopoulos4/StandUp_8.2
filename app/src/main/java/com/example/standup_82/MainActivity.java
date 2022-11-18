@@ -24,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String PRIMARY_CHANNEL_ID =
             "primary_notification_channel";
     private NotificationManager mNotificationManager;
+    private boolean hasCanceled = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +33,11 @@ public class MainActivity extends AppCompatActivity {
 
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        Intent notifyIntent = new Intent(MainActivity.this, AlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(),
+                NOTIFICATION_ID,
+                notifyIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 
         ToggleButton alarmToggle = findViewById(R.id.alarmToggle);
         alarmToggle.setOnCheckedChangeListener(
@@ -39,13 +45,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
                         if (isChecked) {
-
-                            Intent notifyIntent = new Intent(MainActivity.this, AlarmReceiver.class);
-                            PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(),
-                                    NOTIFICATION_ID,
-                                    notifyIntent,
-                                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
-
+                            hasCanceled = false;
                             Calendar calendar = Calendar.getInstance();
                             calendar.set(Calendar.HOUR_OF_DAY, 12);
                             calendar.set(Calendar.MINUTE, 0);
@@ -56,8 +56,8 @@ public class MainActivity extends AppCompatActivity {
                             alarmManager.setAlarmClock(alarmClockInfo, pendingIntent);
 
                         } else {
-                            mNotificationManager.cancelAll();
-
+                            alarmManager.cancel(pendingIntent);
+                            hasCanceled = true;
                         }
                     }
                 });
@@ -66,13 +66,15 @@ public class MainActivity extends AppCompatActivity {
         nextAlarmButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                long millis = alarmManager.getNextAlarmClock().getTriggerTime() - System.currentTimeMillis();
-                String milString = String.format("%d min, %d sec",
-                        TimeUnit.MILLISECONDS.toMinutes(millis),
-                        TimeUnit.MILLISECONDS.toSeconds(millis) -
-                                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis))
-                );
-                Toast.makeText(MainActivity.this, milString, Toast.LENGTH_SHORT).show();
+               if(!hasCanceled) {
+                   long millis = alarmManager.getNextAlarmClock().getTriggerTime() - System.currentTimeMillis();
+                   String milString = String.format("%d min, %d sec",
+                           TimeUnit.MILLISECONDS.toMinutes(millis),
+                           TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+                   Toast.makeText(MainActivity.this, milString, Toast.LENGTH_SHORT).show();
+               }else{
+                   Toast.makeText(MainActivity.this, "Turn on the alarm", Toast.LENGTH_SHORT).show();
+               }
             }
         });
 
