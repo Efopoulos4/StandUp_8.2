@@ -24,7 +24,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         Log.d("paok", "deliverNotification: ");
         Intent contentIntent = new Intent(context, MainActivity.class);
         PendingIntent contentPendingIntent = PendingIntent.getActivity
-                (context, NOTIFICATION_ID, contentIntent, PendingIntent.FLAG_MUTABLE);
+                (context, NOTIFICATION_ID, contentIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
         Notification.Builder builder = null;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             builder = new Notification.Builder(context, PRIMARY_CHANNEL_ID)
@@ -39,4 +39,5 @@ public class AlarmReceiver extends BroadcastReceiver {
         mNotificationManager.notify(NOTIFICATION_ID, builder.build());
 
     }
+
 }
